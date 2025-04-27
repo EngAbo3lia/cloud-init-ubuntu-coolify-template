@@ -7,14 +7,11 @@ autoinstall:
   identity:
     hostname: coolify-server
     username: aboalia
-    password: "Abo3lia.P@ssw0rd"  # Generate with: openssl passwd -6
+    password: "$6$rounds=4096$./z6S9b7dL8yM9XW$j6pF6f0L8yM9XW1z6S9b7dL8yM9XW1z6S9b7dL8yM9XW1z6S9b7d"  # Hashed: Abo3lia.P@ssw0rd2025
   ssh:
     install-server: true
     allow-pw: true  # Temporary, disabled later
   storage:
-    layout:
-      name: lvm
-      sizing-policy: all
     config:
       - type: disk
         id: disk0
@@ -37,7 +34,7 @@ autoinstall:
       - type: partition
         id: lvm-part
         device: disk0
-        size: -1  # Use remaining space
+        size: -1
         flag: lvm
       - type: lvm_volgroup
         id: vg-ubuntu
@@ -48,7 +45,7 @@ autoinstall:
         id: root-lv
         name: root
         volgroup: vg-ubuntu
-        size: 32G
+        size: 40G
       - type: format
         id: root-fmt
         fstype: ext4
@@ -61,7 +58,7 @@ autoinstall:
         id: var-lv
         name: var
         volgroup: vg-ubuntu
-        size: 32G
+        size: 30G
       - type: format
         id: var-fmt
         fstype: ext4
@@ -74,7 +71,7 @@ autoinstall:
         id: docker-lv
         name: docker
         volgroup: vg-ubuntu
-        size: 32G
+        size: 25G
       - type: format
         id: docker-fmt
         fstype: ext4
@@ -87,7 +84,7 @@ autoinstall:
         id: home-lv
         name: home
         volgroup: vg-ubuntu
-        size: 5G
+        size: 3G
       - type: format
         id: home-fmt
         fstype: ext4
@@ -153,6 +150,7 @@ autoinstall:
           ClientAliveCountMax 0
           Ciphers aes256-ctr,aes192-ctr,aes128-ctr
           KexAlgorithms curve25519-sha256,curve25519-sha256@libssh.org
+        permissions: '0644'
       - path: /etc/fail2ban/jail.d/sshd.conf
         content: |
           [sshd]
@@ -161,6 +159,7 @@ autoinstall:
           maxretry = 3
           bantime = 3600
           findtime = 600
+        permissions: '0644'
     runcmd:
       - [ufw, allow, 2222/tcp]
       - [ufw, allow, 80/tcp]
@@ -171,7 +170,7 @@ autoinstall:
       - [ufw, allow, 7575/tcp]
       - [ufw, allow, 8080/tcp]
       - [ufw, allow, 5432/tcp]
-      - [ufw, enable]
+      - [ufw, --force, enable]
       - [systemctl, restart, ssh]
       - [systemctl, restart, fail2ban]
       - [chmod, 700, /home/aboalia/.ssh]
