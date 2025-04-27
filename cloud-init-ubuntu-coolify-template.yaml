@@ -7,10 +7,10 @@ autoinstall:
   identity:
     hostname: coolify-server
     username: aboalia
-    password: "$6$rounds=4096$./z6S9b7dL8yM9XW$j6pF6f0L8yM9XW1z6S9b7dL8yM9XW1z6S9b7dL8yM9XW1z6S9b7d"  # Hashed: Abo3lia.P@ssw0rd2025
+    password: "$6$rounds=4096$KfQz5iW8$Q8z5iW8Qz5iW8Qz5iW8Qz5iW8Qz5iW8Qz5iW8Qz5iW8Qz5iW8Qz5iW8Qz5iW8Qz5iW8Qz5iW8Qz5iW8Qz5iW8Qz5iW8"  # Hashed: Abo3lia.P@ssw0rd2025
   ssh:
     install-server: true
-    allow-pw: true  # Temporary, disabled later
+    allow-pw: true
   storage:
     config:
       - type: disk
@@ -136,7 +136,7 @@ autoinstall:
         shell: /bin/bash
         sudo: ALL=(ALL) NOPASSWD:ALL
         ssh_authorized_keys:
-          - ssh-ed25519 YOUR_PUBLIC_KEY_HERE  # Replace with your public key
+          - ssh-ed25519 YOUR_PUBLIC_KEY_HERE
     write_files:
       - path: /etc/ssh/sshd_config.d/custom.conf
         content: |
@@ -161,23 +161,23 @@ autoinstall:
           findtime = 600
         permissions: '0644'
     runcmd:
-      - [ufw, allow, 2222/tcp]
-      - [ufw, allow, 80/tcp]
-      - [ufw, allow, 443/tcp]
-      - [ufw, allow, 8000/tcp]
-      - [ufw, allow, 3000/tcp]
-      - [ufw, allow, 5678/tcp]
-      - [ufw, allow, 7575/tcp]
-      - [ufw, allow, 8080/tcp]
-      - [ufw, allow, 5432/tcp]
-      - [ufw, --force, enable]
-      - [systemctl, restart, ssh]
-      - [systemctl, restart, fail2ban]
-      - [chmod, 700, /home/aboalia/.ssh]
-      - [chmod, 600, /home/aboalia/.ssh/authorized_keys]
-      - [curl, -fsSL, https://cdn.coollabs.io/coolify/install.sh, -o, /tmp/install-coolify.sh]
-      - [bash, /tmp/install-coolify.sh]
-      - [rm, /tmp/install-coolify.sh]
-      - [systemctl, enable, docker]
-      - [systemctl, start, docker]
+      - ["ufw", "allow", "2222/tcp"]
+      - ["ufw", "allow", "80/tcp"]
+      - ["ufw", "allow", "443/tcp"]
+      - ["ufw", "allow", "8000/tcp"]
+      - ["ufw", "allow", "3000/tcp"]
+      - ["ufw", "allow", "5678/tcp"]
+      - ["ufw", "allow", "7575/tcp"]
+      - ["ufw", "allow", "8080/tcp"]
+      - ["ufw", "allow", "5432/tcp"]
+      - ["ufw", "--force", "enable"]
+      - ["systemctl", "restart", "ssh"]
+      - ["systemctl", "restart", "fail2ban"]
+      - ["chmod", "700", "/home/aboalia/.ssh"]
+      - ["chmod", "600", "/home/aboalia/.ssh/authorized_keys"]
+      - ["curl", "-fsSL", "https://cdn.coollabs.io/coolify/install.sh", "-o", "/tmp/install-coolify.sh"]
+      - ["bash", "/tmp/install-coolify.sh"]
+      - ["rm", "/tmp/install-coolify.sh"]
+      - ["systemctl", "enable", "docker"]
+      - ["systemctl", "start", "docker"]
     final_message: "Coolify template setup complete after $UPTIME seconds"
