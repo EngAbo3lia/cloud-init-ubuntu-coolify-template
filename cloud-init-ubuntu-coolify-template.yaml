@@ -1,0 +1,184 @@
+#cloud-config
+autoinstall:
+  version: 1
+  locale: en_US
+  keyboard:
+    layout: us
+  identity:
+    hostname: coolify-server
+    username: aboalia
+    password: "Abo3lia.P@ssw0rd"  # Generate with: openssl passwd -6
+  ssh:
+    install-server: true
+    allow-pw: true  # Temporary, disabled later
+  storage:
+    layout:
+      name: lvm
+      sizing-policy: all
+    config:
+      - type: disk
+        id: disk0
+        path: /dev/sda
+        ptable: gpt
+        wipe: superblock
+      - type: partition
+        id: boot-part
+        device: disk0
+        size: 1G
+        flag: boot
+      - type: format
+        id: boot-fmt
+        fstype: ext4
+        volume: boot-part
+      - type: mount
+        id: boot-mount
+        device: boot-fmt
+        path: /boot
+      - type: partition
+        id: lvm-part
+        device: disk0
+        size: -1  # Use remaining space
+        flag: lvm
+      - type: lvm_volgroup
+        id: vg-ubuntu
+        name: ubuntu-vg
+        devices:
+          - lvm-part
+      - type: lvm_logical_volume
+        id: root-lv
+        name: root
+        volgroup: vg-ubuntu
+        size: 32G
+      - type: format
+        id: root-fmt
+        fstype: ext4
+        volume: root-lv
+      - type: mount
+        id: root-mount
+        device: root-fmt
+        path: /
+      - type: lvm_logical_volume
+        id: var-lv
+        name: var
+        volgroup: vg-ubuntu
+        size: 32G
+      - type: format
+        id: var-fmt
+        fstype: ext4
+        volume: var-lv
+      - type: mount
+        id: var-mount
+        device: var-fmt
+        path: /var
+      - type: lvm_logical_volume
+        id: docker-lv
+        name: docker
+        volgroup: vg-ubuntu
+        size: 32G
+      - type: format
+        id: docker-fmt
+        fstype: ext4
+        volume: docker-lv
+      - type: mount
+        id: docker-mount
+        device: docker-fmt
+        path: /var/lib/docker
+      - type: lvm_logical_volume
+        id: home-lv
+        name: home
+        volgroup: vg-ubuntu
+        size: 5G
+      - type: format
+        id: home-fmt
+        fstype: ext4
+        volume: home-lv
+      - type: mount
+        id: home-mount
+        device: home-fmt
+        path: /home
+      - type: lvm_logical_volume
+        id: swap-lv
+        name: swap
+        volgroup: vg-ubuntu
+        size: 4G
+      - type: format
+        id: swap-fmt
+        fstype: swap
+        volume: swap-lv
+      - type: mount
+        id: swap-mount
+        device: swap-fmt
+        path: none
+        options: sw
+  network:
+    version: 2
+    ethernets:
+      ens160:
+        dhcp4: no
+        addresses:
+          - 192.168.1.100/24
+        gateway4: 192.168.1.1
+        nameservers:
+          addresses:
+            - 163.121.128.134
+            - 163.121.128.135
+  packages:
+    - open-vm-tools
+    - ufw
+    - fail2ban
+    - docker.io
+    - docker-compose
+  user-data:
+    timezone: UTC
+    package_update: true
+    package_upgrade: true
+    users:
+      - name: aboalia
+        primary_group: aboalia
+        groups: sudo, docker
+        shell: /bin/bash
+        sudo: ALL=(ALL) NOPASSWD:ALL
+        ssh_authorized_keys:
+          - ssh-ed25519 YOUR_PUBLIC_KEY_HERE  # Replace with your public key
+    write_files:
+      - path: /etc/ssh/sshd_config.d/custom.conf
+        content: |
+          Port 2222
+          PermitRootLogin no
+          PasswordAuthentication no
+          PubkeyAuthentication yes
+          AllowUsers aboalia
+          MaxAuthTries 3
+          ClientAliveInterval 600
+          ClientAliveCountMax 0
+          Ciphers aes256-ctr,aes192-ctr,aes128-ctr
+          KexAlgorithms curve25519-sha256,curve25519-sha256@libssh.org
+      - path: /etc/fail2ban/jail.d/sshd.conf
+        content: |
+          [sshd]
+          enabled = true
+          port = 2222
+          maxretry = 3
+          bantime = 3600
+          findtime = 600
+    runcmd:
+      - [ufw, allow, 2222/tcp]
+      - [ufw, allow, 80/tcp]
+      - [ufw, allow, 443/tcp]
+      - [ufw, allow, 8000/tcp]
+      - [ufw, allow, 3000/tcp]
+      - [ufw, allow, 5678/tcp]
+      - [ufw, allow, 7575/tcp]
+      - [ufw, allow, 8080/tcp]
+      - [ufw, allow, 5432/tcp]
+      - [ufw, enable]
+      - [systemctl, restart, ssh]
+      - [systemctl, restart, fail2ban]
+      - [chmod, 700, /home/aboalia/.ssh]
+      - [chmod, 600, /home/aboalia/.ssh/authorized_keys]
+      - [curl, -fsSL, https://cdn.coollabs.io/coolify/install.sh, -o, /tmp/install-coolify.sh]
+      - [bash, /tmp/install-coolify.sh]
+      - [rm, /tmp/install-coolify.sh]
+      - [systemctl, enable, docker]
+      - [systemctl, start, docker]
+    final_message: "Coolify template setup complete after $UPTIME seconds"
